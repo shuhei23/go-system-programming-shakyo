@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+/* interface */
 type Talker interface {
 	Talk()
 	// Talking()を入れるとGreeterで未定義なので、talker = &greeterの行でコンパイルエラーになる。
@@ -13,12 +14,9 @@ type Speaker interface {
 	Speak()
 }
 
+/* Greeter */
 type Greeter struct {
 	name string
-}
-
-type Roarer struct {
-	name2 string
 }
 
 func (g Greeter) Talk() {
@@ -27,6 +25,11 @@ func (g Greeter) Talk() {
 
 func (g Greeter) Speak() {
 	fmt.Printf("Hey Bro,  my name is %s\n", g.name)
+}
+
+/* Roarer */
+type Roarer struct {
+	name2 string
 }
 
 func (r Roarer) Talk() {
