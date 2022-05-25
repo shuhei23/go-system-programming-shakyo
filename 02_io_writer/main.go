@@ -17,8 +17,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	file.Write([]byte("os.File example\n"))
-	file.Close()
+	// file.Write([]byte("os.File example\n"))
+	// file.Close()
 
 	//2.4.2
 	os.Stdout.Write([]byte("os.Stdout example\n"))
@@ -52,10 +52,15 @@ func main() {
 	//io.Copy(os.Stdout, conn)
 
 	//2.4.5 - 2
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	// http.HandleFunc("/", handler)
+	// http.ListenAndServe(":8080", nil)
+
+	// 2.4.6
+	writer := io.MultiWriter(file, os.Stdout)
+	io.WriteString(writer, "io.MultiWriter example \n")
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	//2.4.5 - 2
 	io.WriteString(w, "http.ResposeWriter sample")
 }
