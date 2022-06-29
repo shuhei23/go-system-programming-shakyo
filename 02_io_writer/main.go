@@ -58,11 +58,11 @@ func main() {
 	//req.Write(conn)
 	//io.Copy(os.Stdout, conn)
 
-	//2.4.5 - 2
+	/* 2.4.5 - 2 */
 	// http.HandleFunc("/", handler)
 	// http.ListenAndServe(":8080", nil)
 
-	// 2.4.6
+	/* 2.4.6 */
 	//writer := io.MultiWriter(file, os.Stdout)
 	//io.WriteString(writer, "io.MultiWriter example \n")
 	// file, err := os.Create("test.txt.gz") // zipファイル名
@@ -80,7 +80,7 @@ func main() {
 	// buffer.WriteString("example \n")
 	// buffer.Flush()
 
-	// // 2.4.7
+	/* 2.4.7 */
 	// fmt.Fprintf(os.Stdout, "Write with %v at %v\n", "os.Stdout", time.Now())
 
 	// encoder := json.NewEncoder(os.Stdout)
@@ -97,7 +97,7 @@ func main() {
 	// request.Header.Set("X-TEST", "ヘッダーも追加できます")
 	// request.Write(os.Stdout)
 
-	// 2.9 Q 2.1
+	/* 2.9 Q 2.1 */
 	// file, err := os.Create("Q2-1.txt")
 	// if err != nil {
 	// 	panic(err)
@@ -105,7 +105,7 @@ func main() {
 
 	// fmt.Fprintf(file, "int:%d, string:%s, float:%f \n", 10000000000000000000000000/100000000000000000000, "Q2-1", 3.3)
 
-	// 2.9 Q 2.2
+	/* 2.9 Q 2.2 */
 	// file, err := os.Create("Q2_2.csv")
 	// if err != nil {
 	// 	panic(err)
@@ -114,17 +114,22 @@ func main() {
 	// writer.Write([]string{"imai", "oda", "toda"})
 	// writer.Flush()  // 水洗すること
 
-	// 2.9 Q 2.3
+	/* 2.9 Q 2.3 */
 	http.HandleFunc("/", handler)
+	http.HandleFunc("/favicon.ico", handlerICon) // Chromium用のダミーハンドラを呼び出す
 	http.ListenAndServe(":8080", nil)
 }
 
 // func handler(w http.ResponseWriter, r *http.Request) {
-// 	//2.4.5 - 2
+// 	/*  2.4.5 - 2 */
 // 	io.WriteString(w, "http.ResposeWriter sample")
 // }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	/*  2.9 Q2.3 */
+	/* net/httpパッケージを使ってhttpサーバを立てると、
+	   Chromiumベースのブラウザ(Edge/Chromeなど)の場合、リクエストを処理する関数が二回実行される
+	   https://qiita.com/sjinji/items/47fc478ff8c026dabc0e */
 	w.Header().Set("Content-Encoding", "gzip")
 	w.Header().Set("Content-Type", "application/json")
 
@@ -134,19 +139,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	//
 	gzwriter := gzip.NewWriter(w)
 	writer := io.MultiWriter(gzwriter, os.Stdout)
-	// jsonの文字列変換
 	encoder := json.NewEncoder(writer)
-	// encoder.SetIndent("", " ")
-	encoder.Encode(source)
-
-	// gzip圧縮
-	// file, err := os.Create("test.txt.gz") // zipファイル名
-	// if err != nil {
-	// panic(err)
-	// }
-	// writer := gzip.NewWriter(w)
-	// writer.Header.Name = "test1.txt" // 展開後のファイル名
-	// io.WriteString(writer, "gzip.Writer example 1234567890\n")
-	// writer.Close()
-	// 圧縮前出力を標準出力に出す
+	encoder.Encode(source) // jsonの文字列変換しながら、gzip圧縮＋標準出力
+	gzwriter.Flush()       // gzip圧縮したデータの掃き出し
 }
+
+/* favicon.icoｍｐハンドラ */
+func handlerICon(w http.ResponseWriter, r *http.Request) {}
