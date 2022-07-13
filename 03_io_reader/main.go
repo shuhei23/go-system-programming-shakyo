@@ -1,8 +1,13 @@
 package main
 
 import (
-	"io"
-	"os"
+	// "bufio"
+	"fmt"
+	// "io"
+	// "net"
+	// "net/http"
+	// "os"
+	"bytes"
 )
 
 func main() {
@@ -19,7 +24,7 @@ func main() {
 
 	/* 3.4.1 */
 	// for {
-	// 	buffer := make([]byte, 5)
+	//	buffer := make([]byte, 5)
 	// 	size, err := os.Stdin.Read(buffer)
 	// 	if err == io.EOF {
 	// 		fmt.Println("EOF")
@@ -34,12 +39,36 @@ func main() {
 	// main.go:1:1: expected 'package', found 'EOF'
 
 	/* 3.4.2 */
-	file, err := os.Open("test.txt")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close() // defer:現在のスコープが終了したら、その後ろに書かれている行の処理を実行します
-	io.Copy(os.Stdout, file)
+	// file, err := os.Open("test.txt")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer file.Close() // defer:現在のスコープが終了したら、その後ろに書かれている行の処理を実行します
+	// io.Copy(os.Stdout, file)
 
 	/* 3.4.3 */
+	// conn, err := net.Dial("tcp", "example.com:80")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// conn.Write([]byte("GET / HTTP/1.0\r\nHost: example.com\r\n\r\n"))
+	// res, err := http.ReadResponse(bufio.NewReader(conn), nil)
+	// //ヘッダーを表示
+	// fmt.Println("----------Header-----------")
+	// fmt.Println(res.Header)
+	// //ボディーを表示。最後にClose()
+	// defer res.Body.Close()
+	// fmt.Println("----------Body-----------")
+	// io.Copy(os.Stdout, res.Body)
+
+	/* 3.4.4 */
+	// 空のバッファ
+	var buffer1 bytes.Buffer
+	// バイト列で初期化
+	buffer2 := bytes.NewBuffer([]byte{0x41, 0x48, 0x4f})
+	// 文字列で初期化
+	buffer3 := bytes.NewBufferString("初期文字列")
+	fmt.Printf("%s\n", buffer1.String())
+	fmt.Printf("%s\n", buffer2.String())
+	fmt.Printf("%s\n", buffer3.String())
 }
