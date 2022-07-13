@@ -3,11 +3,15 @@ package main
 import (
 	// "bufio"
 	"fmt"
+
 	// "io"
+	// "strings"
+
 	// "net"
 	// "net/http"
-	// "os"
 	"bytes"
+	// "os"
+	"encoding/binary"
 )
 
 func main() {
@@ -62,13 +66,41 @@ func main() {
 	// io.Copy(os.Stdout, res.Body)
 
 	/* 3.4.4 */
-	// 空のバッファ
-	var buffer1 bytes.Buffer
-	// バイト列で初期化
-	buffer2 := bytes.NewBuffer([]byte{0x41, 0x48, 0x4f})
-	// 文字列で初期化
-	buffer3 := bytes.NewBufferString("初期文字列")
-	fmt.Printf("%s\n", buffer1.String())
-	fmt.Printf("%s\n", buffer2.String())
-	fmt.Printf("%s\n", buffer3.String())
+	// // 空のバッファ
+	// var buffer1 bytes.Buffer
+	// // バイト列で初期化
+	// buffer2 := bytes.NewBuffer([]byte{0x41, 0x48, 0x4f})
+	// // 文字列で初期化
+	// buffer3 := bytes.NewBufferString("初期文字列")
+	// fmt.Printf("%s\n", buffer1.String())
+	// fmt.Printf("%s\n", buffer2.String())
+	// fmt.Printf("%s\n", buffer3.String())
+
+	// // bytes.Readerはbytes.NewReaderで作成
+	// bReader1 := bytes.NewReader([]byte{0x41, 0x48, 0x4f, 0x0a})
+	// bReader2 := bytes.NewReader([]byte("文字列をバイト配列にキャストして設定\n"))
+
+	// // strings.Readerはstrings.NewReader()関数で作成
+	// sReader := strings.NewReader("Readerの出力内容は文字列で渡す\n")
+
+	// io.Copy(os.Stdout, bReader1)
+	// io.Copy(os.Stdout, bReader2)
+	// io.Copy(os.Stdout, sReader)
+
+	/* 3.5.1 */
+	/* 指定バイト数読みだす／指定位置から指定バイト数読みだす */
+	// reader := strings.NewReader("Example of io.SectionReader\n kyouha iitenki.\n")
+	// lReader := io.LimitReader(reader, 16)
+	// sectionReader := io.NewSectionReader(reader, 32, 7)
+	// io.Copy(os.Stdout, lReader)
+	// print("\n")
+	// io.Copy(os.Stdout, sectionReader)
+
+	/* 3.5.2 */
+	// 32ビットのビッグエンディアンのデータ(10000)
+	data := []byte{0x0, 0x0, 0x27, 0x10}
+	var i int32
+	//エンディアンの変換
+	binary.Read(bytes.NewReader(data), binary.BigEndian, &i) // BigEndianのデータに変換してください
+	fmt.Printf("data: %d\n", i)
 }
