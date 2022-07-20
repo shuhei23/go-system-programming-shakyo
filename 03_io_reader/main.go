@@ -1,17 +1,12 @@
 package main
 
 import (
-	// "bufio"
-	"fmt"
-
-	// "io"
-	// "strings"
-
-	// "net"
-	// "net/http"
 	"bytes"
-	// "os"
 	"encoding/binary"
+	"fmt"
+	"hash/crc32"
+	"io"
+	"os"
 )
 
 func main() {
@@ -96,11 +91,104 @@ func main() {
 	// print("\n")
 	// io.Copy(os.Stdout, sectionReader)
 
-	/* 3.5.2 */
-	// 32ビットのビッグエンディアンのデータ(10000)
-	data := []byte{0x0, 0x0, 0x27, 0x10}
-	var i int32
-	//エンディアンの変換
-	binary.Read(bytes.NewReader(data), binary.BigEndian, &i) // BigEndianのデータに変換してください
-	fmt.Printf("data: %d\n", i)
+	// /* 3.5.2 */
+	// // 32ビットのビッグエンディアンのデータ(10000)
+	// data := []byte{0x0, 0x0, 0x27, 0x10}
+	// var i int32
+	// //エンディアンの変換
+	// binary.Read(bytes.NewReader(data), binary.BigEndian, &i) // BigEndianのデータに変換してください
+	// fmt.Printf("data: %d\n", i)
+
+	/* 3.5.3 */
+	file, err := os.Open("PNG_transparency_demonstration_secret.png")
+	// 226,933 バイト
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+	chunks := readChunks(file)
+	for _, chunk := range chunks {
+		dumpChunk(chunk)
+	}
+
+	/* 3.5.4 */
+	// file, err := os.Open("PNG_transparency_demonstration_1.png") // 226,933 バイト
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer file.Close()
+
+	// newFile, err := os.Create("PNG_transparency_demonstration_secret.png") // 226,959 バイト
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer newFile.Close()
+
+	// chunks := readChunks(file)
+	// io.WriteString(newFile, "\x89PNG\r\n\x1a\n")  // シグニチャ
+	// io.Copy(newFile, chunks[0])                   // IHDR
+	// io.Copy(newFile, textChunk("Lambda Notes++")) // 秘密のデータはあと
+	// // 残りのデータ
+	// for _, chunk := range chunks[1:] {
+	// 	io.Copy(newFile, chunk)
+	// }
+}
+
+func dumpChunk(chunk io.Reader) {
+	var length int32
+	binary.Read(chunk, binary.BigEndian, &length)
+	buffer := make([]byte, 4)
+	chunk.Read(buffer) // type
+	fmt.Printf("chunk '%v' (%d bytes)\n", string(buffer), length)
+
+	if bytes.Equal(buffer, []byte("teXt")) {
+		rawText := make([]byte, length)
+		chunk.Read(rawText) // data
+		fmt.Println(string(rawText))
+	}
+}
+
+func textChunk(text string) io.Reader {
+	byteText := []byte(text)
+	crc := crc32.NewIEEE()
+	var buffer bytes.Buffer
+
+	/* bufferにlengthを書き込む */
+	binary.Write(&buffer, binary.BigEndian, int32(len(byteText)))
+	// CRC計算とバッファ書き込みを同時に行う
+	writer := io.MultiWriter(&buffer, crc)
+	/* buffer, crcにtypeを書き込む */
+	io.WriteString(writer, "teXt") // 2バイト目の5ビット目を立てるとプライベート(オリジナル)
+	// A 0x41(0100 0001) ~ Z 0x5a(0101 1010)
+	// a 0x61(0110 0001) ~ z 0x7a(0111 1010)
+	/* buffer, crcにdataをかきこむ */
+	writer.Write(byteText)
+	// bufferにチェックサムを書き込む
+	binary.Write(&buffer, binary.BigEndian, crc.Sum32())
+	return &buffer
+}
+
+func readChunks(file *os.File) []io.Reader {
+	// length(4 bytes) + type(4 bytes) + data(length bytes) + CRC(4 bytes)
+
+	//チャンクを格納する配列
+	var chunks []io.Reader
+
+	//最初の8バイトを飛ばす
+	file.Seek(8, 0)
+	var offset int64 = 8
+
+	for {
+		var length int32
+		err := binary.Read(file, binary.BigEndian, &length) // 長さを読みだす
+		if err == io.EOF {
+			break
+		}
+		chunks = append(chunks, io.NewSectionReader(file, offset, int64(4+4+length+4)))
+		// 次のチャンクの先頭に移動
+		// 現在位置は長さを読み終わった箇所なので
+		// チャンク名(4バイト) + データ長(length) + CRC(4バイト)先に移動
+		offset, _ = file.Seek(int64(4+length+4), 1)
+	}
+	return chunks
 }
