@@ -3,10 +3,12 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/csv"
 	"fmt"
 	"hash/crc32"
 	"io"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -99,17 +101,17 @@ func main() {
 	// binary.Read(bytes.NewReader(data), binary.BigEndian, &i) // BigEndianのデータに変換してください
 	// fmt.Printf("data: %d\n", i)
 
-	/* 3.5.3 */
-	file, err := os.Open("PNG_transparency_demonstration_secret.png")
-	// 226,933 バイト
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-	chunks := readChunks(file)
-	for _, chunk := range chunks {
-		dumpChunk(chunk)
-	}
+	// /* 3.5.3 */
+	// file, err := os.Open("PNG_transparency_demonstration_secret.png")
+	// // 226,933 バイト
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer file.Close()
+	// chunks := readChunks(file)
+	// for _, chunk := range chunks {
+	// 	dumpChunk(chunk)
+	// }
 
 	/* 3.5.4 */
 	// file, err := os.Open("PNG_transparency_demonstration_1.png") // 226,933 バイト
@@ -132,12 +134,70 @@ func main() {
 	// for _, chunk := range chunks[1:] {
 	// 	io.Copy(newFile, chunk)
 	// }
+
+	/* 3.6.1 */
+	// reader := bufio.NewReader(strings.NewReader(source))
+	// for {
+	// 	line, err := reader.ReadString('\n')
+	// 	fmt.Printf("%#v\n", line)
+	// 	fmt.Printf("%v\n", line)
+	// 	if err == io.EOF {
+	// 		break
+	// 	}
+	// }
+	// scanenr := bufio.NewScanner(strings.NewReader(source))
+	// scanenr.Split(bufio.ScanWords) // スペース区切り
+	// scanenr.Split(bufio.ScanBytes)
+	// scanenr.Split(bufio.ScanLines)
+	// scanenr.Split(bufio.ScanRunes)
+
+	// for scanenr.Scan() {
+	// 	fmt.Printf("%#v\n", scanenr.Text())
+	// }
+
+	/* 3.6.2 */
+	// reader := strings.NewReader(source)
+	// var i int
+	// var f, g float64
+	// var s string
+	// // fmt.Fscan(reader, &i, &f, &g, &s)
+	// // fmt.Printf("i=%#v f=%#v g=%#v s=%#v\n", i, f, g, s)
+	// fmt.Fscanf(reader, "%v, %v, %v, %v", &s, &f, &g, &i)
+	// fmt.Printf("i=%#v f=%#v g=%#v s=%#v\n", s, f, g, i)
+
+	/* 3.6.3 */
+	reader := strings.NewReader(csvSource)
+	csvReader := csv.NewReader(reader)
+	line, _ := csvReader.ReadAll()
+	fmt.Println(line)
+	// for {
+	// 	line, err := csvReader.Read()
+	// 	if err == io.EOF {
+	// 		break
+	// 	}
+	// 	fmt.Println(line[2], line[6:9])
+	// }
+
+	/* 3.7 */
 }
+
+// var source = `1行め 1行め2部 1行め3部
+// 2行め 2行め2部 2行め3部
+// 3行め 3行め2部 3行め3部
+// `
+
+var source = "123 1.234 1.0e4 test"
+
+var csvSource = `13101,"100 ","1000003"," ﾄｳｷｮｳﾄ "," ﾁﾖﾀﾞｸ "," ﾋﾄﾂﾊﾞｼ (1 ﾁｮｳﾒ )"," 東京都 "," 千代田区 "," 一ツ橋（１丁目）",1,0,1,0,0,0
+13101,"101 ","1010003"," ﾄｳｷｮｳﾄ "," ﾁﾖﾀﾞｸ "," ﾋﾄﾂﾊﾞｼ (2 ﾁｮｳﾒ )"," 東京都 "," 千代田区 "," 一ツ橋（２丁目）",1,0,1,0,0,0
+13101,"100 ","1000012"," ﾄｳｷｮｳﾄ "," ﾁﾖﾀﾞｸ "," ﾋﾋﾞﾔｺｳｴﾝ "," 東京都 "," 千代田区 "," 日比谷公園 ",0,0,0,0,0,0
+13101,"102 ","1020093"," ﾄｳｷｮｳﾄ "," ﾁﾖﾀﾞｸ "," ﾋﾗｶﾜﾁｮｳ "," 東京都 "," 千代田区 "," 平河町 ",0,0,1,0,0,0
+13101,"102 ","1020071"," ﾄｳｷｮｳﾄ "," ﾁﾖﾀﾞｸ "," ﾌｼﾞﾐ "," 東京都 "," 千代田区 "," 富士見 ",0,0,1,0,0,0`
 
 func dumpChunk(chunk io.Reader) {
 	var length int32
 	binary.Read(chunk, binary.BigEndian, &length)
-	buffer := make([]byte, 4)
+	bufer := make([]byte, 4)
 	chunk.Read(buffer) // type
 	fmt.Printf("chunk '%v' (%d bytes)\n", string(buffer), length)
 
