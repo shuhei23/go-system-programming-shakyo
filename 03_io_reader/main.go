@@ -1,10 +1,11 @@
 package main
 
 import (
-	"archive/zip"
+	"net/http"
+	//"archive/zip"
 	"bytes"
 	"encoding/binary"
-	"strings"
+	//"strings"
 
 	//"flag"
 	"fmt"
@@ -245,16 +246,26 @@ func main() {
 	// io.Copy(newFile, lReader)
 
 	/* Q3.3 zipファイル内の各ファイルにstrings.Reader()を使ってデータを書き込む */
-	newFile, err := os.Create("Q3_3.zip")
-	if err != nil {
-		panic(err)
-	}
-	zipWriter := zip.NewWriter(newFile)
-	defer zipWriter.Close()
+	// newFile, err := os.Create("Q3_3.zip")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// zipWriter := zip.NewWriter(newFile)
+	// defer zipWriter.Close()
 
-	writer, _ := zipWriter.Create("newfile.txt")
-	str := strings.NewReader("imai tomoaki")
-	io.Copy(writer, str)
+	// writer, _ := zipWriter.Create("newfile.txt")
+	// str := strings.NewReader("imai tomoaki")
+	// io.Copy(writer, str)
+	
+	/* Q3.4 */
+	
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":8080", nil)
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", "attachment; filename=ascii_sample.zip")
 }
 
 // var source = `1行め 1行め2部 1行め3部
