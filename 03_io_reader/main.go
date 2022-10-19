@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"flag"
+	//"flag"
 	"fmt"
 	"hash/crc32"
 
@@ -12,6 +12,7 @@ import (
 	//"hash/crc32"
 	"io"
 	"os"
+	"crypto/rand"
 )
 
 func main() {
@@ -204,32 +205,42 @@ func main() {
 	// go run main.go -?hogehoge
 
 	// os.Argsのlenを表示
-	fmt.Println("count:", len(os.Args))
+	// fmt.Println("count:", len(os.Args))
 
-	for i, v := range os.Args {
-		fmt.Printf("args[%d] -> %s\n", i, v)
-	}
+	// for i, v := range os.Args {
+	// 	fmt.Printf("args[%d] -> %s\n", i, v)
+	// }
 
-	// receivedString := //OS.Args ...
+	// // receivedString := //OS.Args ...
 
-	var s = flag.String("str", "default message.", "append message") /* stringの引数を指定 */
+	// var s = flag.String("str", "default message.", "append message") /* stringの引数を指定 */
 
-	flag.Parse() /* 引数を分解 */
+	// flag.Parse() /* 引数を分解 */
 
-	// ------
-	oldFile, err := os.Open("old.txt")
+	// // ------
+	// oldFile, err := os.Open("old.txt")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer oldFile.Close()
+	// newFile, err := os.Create("new.txt")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer newFile.Close()
+	// //newFile := os.NewFile()
+	// io.Copy(newFile, oldFile)
+	// newFile.WriteString(*s)
+
+	/* Q3.2 */
+	reader := rand.Reader
+	newFile, err := os.Create("Q3_2.txt")
 	if err != nil {
-		panic(err)
+			panic(err)
 	}
-	defer oldFile.Close()
-	newFile, err := os.Create("new.txt")
-	if err != nil {
-		panic(err)
-	}
-	defer newFile.Close()
-	//newFile := os.NewFile()
-	io.Copy(newFile, oldFile)
-	newFile.WriteString(*s)
+	lReader := io.LimitReader(reader, 1024)
+	io.Copy(newFile, lReader)
+
 }
 
 // var source = `1行め 1行め2部 1行め3部
