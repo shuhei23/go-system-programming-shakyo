@@ -6,8 +6,6 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"strings"
-
 	//"flag"
 	"fmt"
 	"hash/crc32"
@@ -18,6 +16,7 @@ import (
 
 	"io"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -264,10 +263,25 @@ func main() {
 	// http.ListenAndServe(":8080", nil)
 
 	/* Q3.5 */
-	str := strings.NewReader("Q3.5 read file")
-	file, _ := os.Create("Q3_5.txt")
-	newCopyN(file, str, 3)
+	// str := strings.NewReader("Q3.5 read file")
+	// file, _ := os.Create("Q3_5.txt")
+	// newCopyN(file, str, 20)
 
+	/* Q3.6 */
+	var (
+		computer    = strings.NewReader("COMPUTER")
+		system      = strings.NewReader("SYSTEM")
+		programming = strings.NewReader("PROGRAMMING")
+	)
+	var stream io.Reader
+	aReader := io.NewSectionReader(programming, 5, 1)
+	sReader := io.NewSectionReader(system, 0, 1)
+	cReader := io.NewSectionReader(computer, 0, 1)
+	iReader1 := io.NewSectionReader(programming, 8, 1)
+	iReader2 := io.NewSectionReader(programming, 8, 1)
+
+	stream = io.MultiReader(aReader, sReader, cReader, iReader1, iReader2)
+	io.Copy(os.Stdout, stream) /* ASCIIを表示する */
 }
 
 func newCopyN(w io.Writer, r io.Reader, size int) {
