@@ -1,8 +1,11 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/binary"
+	"strings"
+
 	//"flag"
 	"fmt"
 	"hash/crc32"
@@ -10,9 +13,9 @@ import (
 	//"encoding/binary"
 	//"fmt"
 	//"hash/crc32"
+
 	"io"
 	"os"
-	"crypto/rand"
 )
 
 func main() {
@@ -233,14 +236,25 @@ func main() {
 	// newFile.WriteString(*s)
 
 	/* Q3.2 */
-	reader := rand.Reader
-	newFile, err := os.Create("Q3_2.txt")
-	if err != nil {
-			panic(err)
-	}
-	lReader := io.LimitReader(reader, 1024)
-	io.Copy(newFile, lReader)
+	// reader := rand.Reader
+	// newFile, err := os.Create("Q3_2.txt")
+	// if err != nil {
+	// 		panic(err)
+	// }
+	// lReader := io.LimitReader(reader, 1024)
+	// io.Copy(newFile, lReader)
 
+	/* Q3.3 zipファイル内の各ファイルにstrings.Reader()を使ってデータを書き込む */
+	newFile, err := os.Create("Q3_3.zip")
+	if err != nil {
+		panic(err)
+	}
+	zipWriter := zip.NewWriter(newFile)
+	defer zipWriter.Close()
+
+	writer, _ := zipWriter.Create("newfile.txt")
+	str := strings.NewReader("imai tomoaki")
+	io.Copy(writer, str)
 }
 
 // var source = `1行め 1行め2部 1行め3部
