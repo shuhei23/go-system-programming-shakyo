@@ -3,12 +3,15 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/csv"
+	"flag"
 	"fmt"
 	"hash/crc32"
+
+	//"encoding/binary"
+	//"fmt"
+	//"hash/crc32"
 	"io"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -166,10 +169,10 @@ func main() {
 	// fmt.Printf("i=%#v f=%#v g=%#v s=%#v\n", s, f, g, i)
 
 	/* 3.6.3 */
-	reader := strings.NewReader(csvSource)
-	csvReader := csv.NewReader(reader)
-	line, _ := csvReader.ReadAll()
-	fmt.Println(line)
+	// reader := strings.NewReader(csvSource)
+	// csvReader := csv.NewReader(reader)
+	// line, _ := csvReader.ReadAll()
+	// fmt.Println(line)
 	// for {
 	// 	line, err := csvReader.Read()
 	// 	if err == io.EOF {
@@ -179,6 +182,54 @@ func main() {
 	// }
 
 	/* 3.7 */
+	// header := bytes.NewBufferString("----- HEADER -----\n")
+	// content := bytes.NewBufferString("Example of io.MultiReader\n")
+	// footer := bytes.NewBufferString("----- FOOTER -----\n")
+
+	//reader := io.MultiReader(header, content, footer)
+	//io.Copy(os.Stdout, reader)
+
+	// var buffer bytes.Buffer
+	// reader := bytes.NewBufferString("Example of io.TeeReader")
+	// teeReader := io.TeeReader(reader, &buffer) /* teeReaderにreaderに読み出しながら、bufferにも書き出す */
+
+	// _, _ = io.ReadAll(teeReader) /* データを読み捨てる */
+	// fmt.Println(buffer.String()) /* けど、バッファに残ってる */
+
+	/* io.pip() はWrite()/Read()が呼ばれた時点でスレッドが待ち状態になる。
+	   シングルスレッドだとこの待ち状態でデッドロックになるので使用してはいけない */
+
+	/* Q3.1 */
+	//-----OS.Argsで文字受け取る
+	// go run main.go -?hogehoge
+
+	// os.Argsのlenを表示
+	fmt.Println("count:", len(os.Args))
+
+	for i, v := range os.Args {
+		fmt.Printf("args[%d] -> %s\n", i, v)
+	}
+
+	// receivedString := //OS.Args ...
+
+	var s = flag.String("str", "default message.", "append message") /* stringの引数を指定 */
+
+	flag.Parse() /* 引数を分解 */
+
+	// ------
+	oldFile, err := os.Open("old.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer oldFile.Close()
+	newFile, err := os.Create("new.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer newFile.Close()
+	//newFile := os.NewFile()
+	io.Copy(newFile, oldFile)
+	newFile.WriteString(*s)
 }
 
 // var source = `1行め 1行め2部 1行め3部
@@ -197,7 +248,7 @@ var csvSource = `13101,"100 ","1000003"," ﾄｳｷｮｳﾄ "," ﾁﾖﾀﾞｸ
 func dumpChunk(chunk io.Reader) {
 	var length int32
 	binary.Read(chunk, binary.BigEndian, &length)
-	bufer := make([]byte, 4)
+	buffer := make([]byte, 4)
 	chunk.Read(buffer) // type
 	fmt.Printf("chunk '%v' (%d bytes)\n", string(buffer), length)
 
