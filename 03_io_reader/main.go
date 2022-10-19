@@ -197,7 +197,7 @@ var csvSource = `13101,"100 ","1000003"," ﾄｳｷｮｳﾄ "," ﾁﾖﾀﾞｸ
 func dumpChunk(chunk io.Reader) {
 	var length int32
 	binary.Read(chunk, binary.BigEndian, &length)
-	bufer := make([]byte, 4)
+	buffer := make([]byte, 4)
 	chunk.Read(buffer) // type
 	fmt.Printf("chunk '%v' (%d bytes)\n", string(buffer), length)
 
