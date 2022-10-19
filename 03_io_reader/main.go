@@ -5,7 +5,8 @@ import (
 	//"archive/zip"
 	"bytes"
 	"encoding/binary"
-	//"strings"
+
+	"strings"
 
 	//"flag"
 	"fmt"
@@ -256,16 +257,29 @@ func main() {
 	// writer, _ := zipWriter.Create("newfile.txt")
 	// str := strings.NewReader("imai tomoaki")
 	// io.Copy(writer, str)
-	
+
 	/* Q3.4 */
-	
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+
+	// http.HandleFunc("/", handler)
+	// http.ListenAndServe(":8080", nil)
+
+	/* Q3.5 */
+	str := strings.NewReader("Q3.5 read file")
+	file, _ := os.Create("Q3_5.txt")
+	newCopyN(file, str, 3)
+
+}
+
+func newCopyN(w io.Writer, r io.Reader, size int) {
+	buffer := make([]byte, size)
+	r.Read(buffer)
+	w.Write(buffer)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", "attachment; filename=ascii_sample.zip")
+	/* Content-Disposition: ダウンロードしてローカルに保存 */
 }
 
 // var source = `1行め 1行め2部 1行め3部
