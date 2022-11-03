@@ -1,10 +1,10 @@
 package main
 
 import (
-	"context"
+	//"context"
 	"fmt"
 	//"math"
-	//"time"
+	"time"
 )
 
 /* 4.1 */
@@ -61,7 +61,7 @@ func main() {
 
 	// <-done
 	// fmt.Println("All tasks are finished")
-	
+
 	/* 4.2.3 */
 	// pn := primeNumber()
 	// // ここがポイント
@@ -70,16 +70,24 @@ func main() {
 	// }
 
 	/* 4.2.5 */
-	fmt.Println("start sub()")
-	// 終了を受け取るための終了関数付きコンテキスト
-	ctx, ctxCancel := context.WithCancel(context.Background())
+	// fmt.Println("start sub()")
+	// // 終了を受け取るための終了関数付きコンテキスト
+	// ctx, ctxCancel := context.WithCancel(context.Background())
 
-	go func() {
-		fmt.Println("sub() is finished")
-		// 終了を通知
-		ctxCancel()
-	}()
-	// 終了を待つ
-	<-ctx.Done() // cancel()されるまでブロック
-	fmt.Println("all tasks are finished")
+	// go func() {
+	// 	fmt.Println("sub() is finished")
+	// 	// 終了を通知
+	// 	ctxCancel()
+	// }()
+	// // 終了を待つ
+	// <-ctx.Done() // cancel()されるまでブロック
+	// fmt.Println("all tasks are finished")
+
+	/* Q4.1 */
+	fmt.Println("----start----")
+	now := time.Now()
+	// <- time.Tick(3 * time.Second)
+	<-time.After(3 * time.Second)
+	fmt.Printf("精度悪いんですか？\n")
+	fmt.Printf("経過: %vs\n", time.Since(now).Seconds())
 }
