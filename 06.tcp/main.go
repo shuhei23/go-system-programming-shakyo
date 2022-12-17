@@ -11,6 +11,14 @@ import (
 )
 
 func main() {
+	go func() {
+		HttpServer() // サーバー立てとく
+	}()
+
+	HttpClient()
+}
+
+func HttpServer() {
 	listener, err := net.Listen("tcp", "localhost:8888") // サーバー起動
 	if err != nil {
 		panic(err)
@@ -50,4 +58,29 @@ func main() {
 			conn.Close()         // クライアントと通信切断
 		}()
 	}
+}
+
+func HttpClient() {
+	conn, err := net.Dial("tcp", "localhost:8888") // Listenしてるサーバーとセッション成立したら帰ってきます
+	if err != nil {
+		panic(err)
+	}
+
+	request, err := http.NewRequest(
+		"Get", "http://localhost:8888", nil)
+	if err != nil {
+		panic(err)
+	}
+
+	request.Write(conn)
+	response, err := http.ReadResponse(bufio.NewReader(conn), request)
+	if err != nil {
+		panic(err)
+	}
+
+	dump, err := httputil.DumpResponse(response, true)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(dump))
 }
