@@ -2,18 +2,24 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"compress/gzip"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
-	"os"
-
+	"strconv"
 	"strings"
 	"time"
 )
+
+var contents = []string{
+	" これは、私わたしが小さいときに、村の茂平もへいというおじいさんからきいたお話です。",
+	" むかしは、私たちの村のちかくの、中山なかやまというところに小さなお城があって、",
+	" 中山さまというおとのさまが、おられたそうです。",
+	" その中山から、少しはなれた山の中に、「ごん狐ぎつね」という狐がいました。",
+	" ごんは、一人ひとりぼっちの小狐で、しだの一ぱいしげった森の中に穴をほって住んでいました。",
+	" そして、夜でも昼でも、あたりの村へ出てきて、いたずらばかりしました。",
+}
 
 func main() {
 	go func() {
@@ -58,31 +64,44 @@ func proccessSession(conn net.Conn) {
 		}
 		fmt.Println(string(dump))
 		// レスポンスを書き込む
-		response := http.Response{
-			StatusCode: 200,
-			ProtoMajor: 1,
-			ProtoMinor: 1,
-			Header:     make(http.Header),
-		}
+		fmt.Fprintf(conn, strings.Join([]string{
+			"HTTP/1.1 200 OK",
+			"Content-Type: text/plain",
+			"Transfer-Encoding: chunked",
+			"", "",
+		}, "\r\n"))
 
-		if isGZipAcceptable(request) {
-			content := "Hello World(gzipped)\n"
-			// コンテンツをgzip化して転送
-			var buffer bytes.Buffer
-			writer := gzip.NewWriter(&buffer)
-			io.WriteString(writer, content)
-			writer.Close()
-
-			response.Body = io.NopCloser(&buffer)
-			response.ContentLength = int64(buffer.Len())
-			response.Header.Set("Content-Encoding", "gzip")
-		} else {
-			// gzip対応してない
-			content := "Hello World\n"
-			response.Body = io.NopCloser(strings.NewReader(content))
-			response.ContentLength = int64(len(content))
+		for _, content := range contents {
+			bytes := []byte(content)
+			fmt.Fprintf(conn, "%x\r\n%s\r\n", len(bytes), content) // データサイズとバイト数分のデータブロック
 		}
-		response.Write(conn) // ソケットに書き込み
+		fmt.Fprintf(conn, "0\r\n\r\n") // 通信完了はサイズ0を渡す
+
+		// response := http.Response{
+		// 	StatusCode: 200,
+		// 	ProtoMajor: 1,
+		// 	ProtoMinor: 1,
+		// 	Header:     make(http.Header),
+		// }
+
+		// if isGZipAcceptable(request) {
+		// 	content := "Hello World(gzipped)\n"
+		// 	// コンテンツをgzip化して転送
+		// 	var buffer bytes.Buffer
+		// 	writer := gzip.NewWriter(&buffer)
+		// 	io.WriteString(writer, content)
+		// 	writer.Close()
+
+		// 	response.Body = io.NopCloser(&buffer)
+		// 	response.ContentLength = int64(buffer.Len())
+		// 	response.Header.Set("Content-Encoding", "gzip")
+		// } else {
+		// 	// gzip対応してない
+		// 	content := "Hello World\n"
+		// 	response.Body = io.NopCloser(strings.NewReader(content))
+		// 	response.ContentLength = int64(len(content))
+		// }
+		// response.Write(conn) // ソケットに書き込み
 	}
 }
 
@@ -105,69 +124,67 @@ func HttpServer() {
 }
 
 func HttpClient() {
-	sendMessages := []string{
-		"ASCII",
-		"PROGRAMMING",
-		"PLUS",
+
+	// Dialから行ってconnを初期化
+	conn, err := net.Dial("tcp", "localhost:8888") // Listenしてるサーバーとセッション成立したら帰ってきます
+	if err != nil {
+		panic(err)
 	}
-	current := 0
-	var conn net.Conn = nil
-	// リトライ用にループで全体を囲う
+	defer conn.Close()
+	// POSTで文字列を送るリクエストを作成
+	request, err := http.NewRequest(
+		"GET",
+		"http://localhost:8888",
+		nil)
+	if err != nil {
+		panic(err)
+	}
+
+	err = request.Write(conn)
+	if err != nil {
+		panic(err)
+	}
+
+	reader := bufio.NewReader(conn)
+
+	//サーバーから読み込む。タイムアウトはここでエラーになるのでリトライ
+	response, err := http.ReadResponse(bufio.NewReader(conn), request)
+	if err != nil {
+		panic(err)
+	}
+	dump, err := httputil.DumpResponse(response, false)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(dump))
+
+	if len(response.TransferEncoding) < 1 ||
+		response.TransferEncoding[0] != "chunked" {
+		panic("wrong transfer encoding")
+	}
 	for {
-		var err error
-		// まだコネクションを張ってない / エラーでリトライ
-		if conn == nil {
-			// Dialから行ってconnを初期化
-			conn, err = net.Dial("tcp", "localhost:8888") // Listenしてるサーバーとセッション成立したら帰ってきます
-			if err != nil {
-				panic(err)
-			}
-			fmt.Printf("Access: %d\n", current)
-		}
-		// POSTで文字列を送るリクエストを作成
-		request, err := http.NewRequest(
-			"POST",
-			"http://localhost:8888",
-			strings.NewReader(sendMessages[current]))
-		if err != nil {
-			panic(err)
-		}
-		request.Header.Set("Accept-Encoding", "gzip")
-		err = request.Write(conn)
-		if err != nil {
-			panic(err)
-		}
-		//サーバーから読み込む。タイムアウトはここでエラーになるのでリトライ
-		response, err := http.ReadResponse(bufio.NewReader(conn), request)
-		if err != nil {
-			fmt.Println("Retry")
-			conn = nil
-			continue
-		}
-		dump, err := httputil.DumpResponse(response, false)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(string(dump))
-
-		defer response.Body.Close()
-		if response.Header.Get("Content-Encoding") == "gzip" {
-			reader, err := gzip.NewReader(response.Body)
-			if err != nil {
-				panic(err)
-			}
-			io.Copy(os.Stdout, reader)
-			reader.Close()
-		} else {
-			io.Copy(os.Stdout, response.Body)
-		}
-
-		// 全部送信完了していれば終了
-		current++
-		if current == len(sendMessages) {
+		// サイズを取得
+		sizeStr, err := reader.ReadBytes('\n')
+		if err == io.EOF {
 			break
 		}
 
+		size, err := strconv.ParseInt(
+			string(sizeStr[:len(sizeStr)-2]), 16, 64)
+		// 送信側フォーマット: fmt.Fprintf(conn, "%x\r\n%s\r\n", len(bytes), content)
+
+		if size == 0 {
+			break
+		}
+		if err != nil {
+			panic(err)
+		}
+		line := make([]byte, int(size))
+		io.ReadFull(reader, line)
+		reader.Discard(2)
+		fmt.Printf("   %d bytes: %s\n", size, string(line))
+
 	}
+
 	conn.Close()
 }
